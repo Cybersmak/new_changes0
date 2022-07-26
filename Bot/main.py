@@ -108,35 +108,32 @@ async def get_keyes(message: types.Message):
         #             await bot.send_document(message.from_user.id,document, reply_markup = nav.mainMenu)
 
 
-                            
-        if message.text == 'Сводные показатели':
-            # await bot.send_message(message.from_user.id, "Повторите попытку")
-            path = r'\\dalimo.ru\1c\PDAFILES\OUT_FTP\Reports'
-            os.chdir(path)
-            sd = db.get_key1(message.from_user.id)
-            for row in sd:
-                files = row + "_dolgi.html"
-                document = open(files, 'rb')
-                await bot.send_document(message.from_user.id,document, reply_markup = nav.mainMenu)
+        try:                    
+            if message.text == 'Сводные показатели':
+                # await bot.send_message(message.from_user.id, "Повторите попытку")
+                path = r'\\dalimo.ru\1c\PDAFILES\OUT_FTP\Reports'
+                os.chdir(path)
+                sd = db.get_key1(message.from_user.id)
+                for row in sd:
+                    files = row + "_dolgi.html"
+                    document = open(files, 'rb')
+                    await bot.send_document(message.from_user.id,document, reply_markup = nav.mainMenu)
+        except FileNotFoundError:
+            await bot.send_message(message.from_user.id, "No such file or directory")
+        user_channel_status = await bot.get_chat_member(message.chat.id,message.from_user.id)
+    if user_channel_status["status"] == 'left':
+        db.delete_key(message.chat.id)
+    else:
+        pass
+        
+        # if message.text == 'delete':
+        #     db.delete_key(message.from_user.id)
+        #     await bot.send_message(message.from_user.id,"Go back to code")
 
+# @dp.message_handler()
+# async def remove(message: types.Message):
 
-@dp.message_handler(content_types=types.ContentType.CONTACT)
-
-async def get_contact(message:types.Message):
-    print(message.contact.phone_number)
-# @dp.message_handler(commands = [''])
-
-# async def get_files(message:types.Message):
-#         if message.text == 'Сводные показатели':
-#             path = r'\\dalimo.ru\1c\PDAFILES\OUT_FTP\Reports'
-#             os.chdir(path)
-#             # files=glob.glob('*.html')
-#             # for filename in files:
-#             #     id = filename[:-11]  
-#             #     sd = id + '_dolgi.html'
-#             #     if db.get_key == id:
-#             document = open(f'K00165_dolgi.html', 'rb')
-#             await bot.send_document(message.from_user.id,document, reply_markup = nav.mainMenu)
+ 
 
 if __name__=="__main__":
     executor.start_polling(dp,skip_updates = True)
