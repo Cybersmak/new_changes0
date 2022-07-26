@@ -67,7 +67,11 @@ class Database:
             result = self.cursor.execute("SELECT `Key` FROM `users` WHERE `User_ID` = ?",(User_ID,)).fetchall()
             for row in result:
                 Key = str(row[0])
-            return Key   
+            return Key              
+    def delete_key(self,User_ID):
+        with self.connection:
+            result = self.cursor.execute("DELETE FROM `users` WHERE `User_ID` = ?",(User_ID,)).fetchall()
+            return result 
                     
     def get_key1(self,User_ID):
         with self.connection:
