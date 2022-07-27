@@ -1,9 +1,15 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 btnProfile = KeyboardButton('ПРОФИЛЬ')
+btnStart = KeyboardButton('/start')
+start = ReplyKeyboardMarkup(resize_keyboard = True, row_width = 1)
+start.add(btnStart)
 btnSub = KeyboardButton('Сводные показатели')
-button_contact = KeyboardButton(text="Делись!", request_contact=True)
+button_contact = KeyboardButton(text="Поделиться", request_contact=True)
 keyboard = ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+btnExit = KeyboardButton('Покинуть чат!')
+btnClicked = ReplyKeyboardMarkup(row_width = 1, resize_keyboard = True)
+btnClicked.add(btnExit)
 keyboard.add(button_contact)
 mainMenu = ReplyKeyboardMarkup(resize_keyboard = True)
-mainMenu.add(btnProfile,btnSub)
+mainMenu.add(btnProfile,btnSub,btnExit)
