@@ -18,12 +18,13 @@ db = Database('DataBase.db')
 @dp.message_handler(commands = ['start'])
 
 async def start(message: types.Message):
+    await message.delete()
     if(not db.user_exists(message.from_user.id)):
         db.add_user(message.from_user.id)
         await bot.send_message(message.from_user.id, "Нажмите на кнопку поделиться чтобы автоматически пройти регистрацию", reply_markup = nav.keyboard)
 
     else:
-        await bot.send_message(message.from_user.id, "Вы уже зарегистрированы!") 
+        await bot.send_message(message.from_user.id, "Вы уже зарегистрированы!" , reply_markup = nav.mainMenu) 
 
 # @dp.message_handler()
 # async def get_started(message:types.Message): 
@@ -126,9 +127,10 @@ async def get_keyes(message: types.Message):
     else:
         pass
         
-        # if message.text == 'delete':
-        #     db.delete_key(message.from_user.id)
-        #     await bot.send_message(message.from_user.id,"Go back to code")
+        if message.text == 'Покинуть чат!':
+            db.delete_key(message.from_user.id)
+            await bot.send_message(message.from_user.id,'Goodbye', reply_markup = nav.start)
+            
 
 # @dp.message_handler()
 # async def remove(message: types.Message):
