@@ -5,6 +5,8 @@ from DataBase import Database
 import os
 import subprocess
 import glob
+from aiogram.utils.exceptions import (MessageToEditNotFound, MessageCantBeEdited, MessageCantBeDeleted,
+                                      MessageToDeleteNotFound)
 
 TOKEN = '5527562178:AAFHrWRmBQk1ZzhuBzv1hhKvONjvnl4U8ns'
 
@@ -18,14 +20,13 @@ db = Database('DataBase.db')
 @dp.message_handler(commands = ['start'])
 
 async def start(message: types.Message):
+    global messages
     await message.delete()
     if(not db.user_exists(message.from_user.id)):
         db.add_user(message.from_user.id)
-        await bot.send_message(message.from_user.id, "Нажмите на кнопку поделиться чтобы автоматически пройти регистрацию", reply_markup = nav.keyboard)
-
+        messages = await bot.send_message(message.from_user.id, "Нажмите на кнопку поделиться чтобы автоматически пройти регистрацию", reply_markup = nav.keyboard)
     else:
-        await bot.send_message(message.from_user.id, "Вы уже зарегистрированы!" , reply_markup = nav.mainMenu) 
-
+        messages = await bot.send_message(message.from_user.id, "Вы уже зарегистрированы!" , reply_markup = nav.mainMenu) 
 # @dp.message_handler()
 # async def get_started(message:types.Message): 
 
@@ -36,6 +37,7 @@ async def start(message: types.Message):
 @dp.message_handler(content_types=types.ContentType.CONTACT)
 
 async def bot_message(message: types.Message):
+    global key_message
     if message.chat.type == 'private':
 
 
@@ -46,24 +48,34 @@ async def bot_message(message: types.Message):
                     db.set_L_Name(message.from_user.id,message.contact.last_name)
                     db.set_signup(message.from_user.id,'done')
                     db.set_phone(message.from_user.id,message.contact.phone_number)
-                    await bot.send_message(message.from_user.id,"Укажите ваш ключ к файлам")
+                    key_message = await bot.send_message(message.from_user.id,"Укажите ваш ключ к файлам")
+                    
                     # await bot.send_message(message.from_user.id,"Укажите ваш номр телефона")
+                    await message.delete()
 
 
 
 
 @dp.message_handler()
 async def get_keyes(message: types.Message):
+    global Profile
+    global message_file
+    global end 
     if message.chat.type == 'private':
         if message.text == 'ПРОФИЛЬ':
             first_name = "Ваше имя: "+ db.get_F_Name(message.from_user.id)
             last_name = "Ваше Фамилия: "+ db.get_L_Name(message.from_user.id)
             user_phone = "Ваш номер телефона: "+db.get_phone(message.from_user.id)
             user_key = "ваш ключ: "+db.get_key(message.from_user.id)
-            await bot.send_message(message.from_user.id,first_name)
-            await bot.send_message(message.from_user.id,last_name)
-            await bot.send_message(message.from_user.id,user_phone)
-            await bot.send_message(message.from_user.id,user_key)
+            
+            Profile = [
+                await bot.send_message(message.from_user.id,first_name),
+                await bot.send_message(message.from_user.id,last_name),
+                await bot.send_message(message.from_user.id,user_phone),
+                await bot.send_message(message.from_user.id,user_key),
+            ]
+                
+        
     
         if db.get_signup(message.from_user.id) == "setName":
             if(len(message.text)>59):
@@ -93,7 +105,7 @@ async def get_keyes(message: types.Message):
                 await bot.send_message(message.from_user.id, "Вы ввели запрешенный символ")
             else:
                 db.set_key(message.from_user.id,message.text)
-                await bot.send_message(message.from_user.id,"Поздравляю вы успешно зарегистрированы!", reply_markup = nav.mainMenu) 
+                end = await bot.send_message(message.from_user.id,"Поздравляю вы успешно зарегистрированы!", reply_markup = nav.mainMenu) 
 
         
    
@@ -118,22 +130,30 @@ async def get_keyes(message: types.Message):
                 for row in sd:
                     files = row + "_dolgi.html"
                     document = open(files, 'rb')
-                    await bot.send_document(message.from_user.id,document, reply_markup = nav.mainMenu)
+                    message_file = await bot.send_document(message.from_user.id,document, reply_markup = nav.mainMenu)
         except FileNotFoundError:
-            await bot.send_message(message.from_user.id, "No such file or directory")
-        user_channel_status = await bot.get_chat_member(message.chat.id,message.from_user.id)
-    if user_channel_status["status"] == 'left':
-        db.delete_key(message.chat.id)
-    else:
-        pass
-        
+            message_file = await bot.send_message(message.from_user.id, "No such file or directory")
+            
+        # try:
         if message.text == 'Покинуть чат!':
             db.delete_key(message.from_user.id)
-            await bot.send_message(message.from_user.id,'Goodbye', reply_markup = nav.start)
-            
-
-# @dp.message_handler()
-# async def remove(message: types.Message):
+            try:    
+                msg = await bot.send_message(message.from_user.id,'Goodbye', reply_markup = nav.start)
+                await bot.delete_message(message.chat.id,msg.message_id)
+                
+                await bot.delete_message(message.chat.id,messages.message_id)
+                await bot.delete_message(message.chat.id,key_message.message_id)
+                await bot.delete_message(message.chat.id,end.message_id)
+                await bot.delete_message(message.chat.id,message_file.message_id)
+                await message.delete()
+            except (MessageToDeleteNotFound,NameError):
+                pass
+            try:
+                    for row in Profile:
+                        await bot.delete_message(message.chat.id,row.message_id)
+            except (MessageToDeleteNotFound,NameError):
+                pass
+    await message.delete()           
 
  
 
